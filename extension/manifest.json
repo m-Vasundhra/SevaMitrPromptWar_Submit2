@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Saarthi AI - Senior Citizen Digital Companion",
+  "version": "1.0.0",
+  "description": "Patient step-by-step AI companion overlay helping seniors navigate digital services with privacy firewall.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.irctc.co.in/*",
+    "https://*.onlinesbi.sbi/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon-48.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "css": ["overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

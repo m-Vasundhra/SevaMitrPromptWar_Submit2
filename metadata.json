@@ -1,0 +1,6 @@
+{
+  "name": "SevaMitr AI - Senior Citizen Digital Companion",
+  "description": "An AI-powered digital companion empowering seniors to independently navigate digital services, booking portals, and banking safely.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
