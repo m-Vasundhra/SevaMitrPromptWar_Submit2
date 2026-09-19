@@ -1,28 +1,64 @@
 @import "tailwindcss";
 
 @layer utilities {
+  .sevamitr-highlight-pulse,
   .saarthi-highlight-pulse {
-    outline: 3px solid #f59e0b !important;
+    outline: 3px solid #d97706 !important;
     outline-offset: 4px !important;
-    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.35), 0 10px 25px -5px rgba(245, 158, 11, 0.25) !important;
-    animation: saarthi-pulse 1.8s infinite ease-in-out;
+    box-shadow: 0 0 0 6px rgba(217, 119, 6, 0.35), 0 10px 25px -5px rgba(217, 119, 6, 0.25) !important;
+    animation: sevamitr-pulse 1.8s infinite ease-in-out;
     border-radius: 8px;
     position: relative;
     z-index: 20;
   }
 }
 
-@keyframes saarthi-pulse {
+@keyframes sevamitr-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.4), 0 0 20px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.4), 0 0 20px rgba(217, 119, 6, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 9px rgba(245, 158, 11, 0.15), 0 0 35px rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 0 9px rgba(217, 119, 6, 0.15), 0 0 35px rgba(217, 119, 6, 0.5);
   }
 }
 
-/* Accessible focus ring */
+/* WCAG 2.2 Accessible Focus Visible Styling */
 :focus-visible {
-  outline: 3px solid #d97706;
-  outline-offset: 2px;
+  outline: 3px solid #b45309 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px #ffffff !important;
 }
+
+/* Screen Reader Skip Link Utility */
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Respect User Reduced Motion Preferences (WCAG 2.2 AA) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .sevamitr-highlight-pulse,
+  .saarthi-highlight-pulse {
+    animation: none !important;
+    outline: 4px solid #b45309 !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 0 4px rgba(180, 83, 9, 0.3) !important;
+  }
+}
+

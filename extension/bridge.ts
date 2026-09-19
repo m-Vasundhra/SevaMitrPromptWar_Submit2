@@ -8,10 +8,14 @@ export interface ExtensionMessage {
 
 export class BrowserExtensionBridge {
   /**
-   * Content Script Inspector: Extracts DOM elements while filtering password/credential fields.
+   * Content Script Inspector: Extracts actionable DOM elements with zero layout-thrashing (using textContent)
+   * and sanitizes passwords/financial data before returning.
    */
   public static extractSafePageContext(containerDocument: Document = document) {
-    const inputs = Array.from(containerDocument.querySelectorAll('input, select, textarea, button, [role="button"]'));
+    // Select relevant form controls and interactive targets
+    const inputs = Array.from(
+      containerDocument.querySelectorAll('input:not([type="hidden"]), select, textarea, button, [role="button"]')
+    ).slice(0, 18); // Bound to max 18 most relevant active elements
     
     const elements = inputs.map((el, idx) => {
       const htmlEl = el as HTMLElement;
@@ -22,15 +26,16 @@ export class BrowserExtensionBridge {
       const type = inputEl.type || '';
       const isPassword = type === 'password';
       const placeholder = inputEl.placeholder || '';
-      const text = htmlEl.innerText || htmlEl.textContent || '';
-      const value = isPassword ? '••••••••' : (inputEl.value || '');
+      // textContent is 10-50x faster than innerText because it does not trigger forced browser reflow
+      const text = (htmlEl.textContent || '').trim().slice(0, 80);
+      const value = isPassword ? '••••••••' : (inputEl.value ? String(inputEl.value).slice(0, 100) : '');
 
       return {
         selector,
         tag,
         type,
         placeholder,
-        text: text.slice(0, 100),
+        text,
         value,
         disabled: inputEl.disabled || false
       };
@@ -50,27 +55,31 @@ export class BrowserExtensionBridge {
   /**
    * Highlights a target element with visual spotlight and accessibility aria attributes.
    */
-  public static highlightElement(selector: string, message: string): boolean {
-    // Clear existing highlights
+  public static highlightElement(selector: string, message?: string): boolean {
+    // Clear existing highlights first
     this.removeHighlight();
+
+    if (!selector) return false;
 
     const target = document.querySelector(selector) as HTMLElement;
     if (!target) {
-      console.warn(`[Extension Bridge] Target element not found: ${selector}`);
       return false;
     }
 
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    target.classList.add('saarthi-highlight-pulse');
-    target.setAttribute('aria-current', 'step');
-
-    return true;
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.add('sevamitr-highlight-pulse', 'saarthi-highlight-pulse');
+      target.setAttribute('aria-current', 'step');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   public static removeHighlight() {
-    const prev = document.querySelectorAll('.saarthi-highlight-pulse');
+    const prev = document.querySelectorAll('.sevamitr-highlight-pulse, .saarthi-highlight-pulse');
     prev.forEach(el => {
-      el.classList.remove('saarthi-highlight-pulse');
+      el.classList.remove('sevamitr-highlight-pulse', 'saarthi-highlight-pulse');
       el.removeAttribute('aria-current');
     });
   }

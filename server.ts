@@ -27,7 +27,7 @@ async function startServer() {
   app.get('/api/health', (req, res) => {
     res.json({
       status: 'ok',
-      service: 'SeveMitr Senior Digital Companion Backend',
+      service: 'SevaMitr Senior Digital Companion Backend',
       timestamp: new Date().toISOString()
     });
   });
@@ -61,10 +61,10 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Saarthi Server] Running on http://0.0.0.0:${PORT}`);
+    console.log(`[SevaMitr Server] Running on http://0.0.0.0:${PORT}`);
   });
 }
 
 startServer().catch((err) => {
-  console.error('[Saarthi Server] Startup failure:', err);
+  console.error('[SevaMitr Server] Startup failure:', err);
 });

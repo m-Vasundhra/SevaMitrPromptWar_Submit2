@@ -4,8 +4,48 @@ import { PrivacyFirewall } from './privacyFirewall.ts';
 import { TaskEngine } from '../task-engine/engine.ts';
 import { WorkflowType, Language } from '../shared/types.ts';
 import { WORKFLOWS } from '../task-engine/workflows.ts';
+import { ALL_TEST_SCENARIOS, ScenarioRunner, TestScenario } from '../src/testing/index.ts';
 
 export const apiRouter = express.Router();
+
+// ---------------------------------------------------------------------------
+// 1. High-Performance LRU/TTL Response Cache
+// ---------------------------------------------------------------------------
+class SimpleResponseCache {
+  private cache = new Map<string, { data: any; expiry: number }>();
+  private maxEntries: number;
+  private defaultTTLMs: number;
+
+  constructor(maxEntries = 300, defaultTTLMs = 10 * 60 * 1000) {
+    this.maxEntries = maxEntries;
+    this.defaultTTLMs = defaultTTLMs;
+  }
+
+  public get(key: string): any | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+    return entry.data;
+  }
+
+  public set(key: string, data: any, ttlMs = this.defaultTTLMs): void {
+    if (this.cache.size >= this.maxEntries) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+    this.cache.set(key, { data, expiry: Date.now() + ttlMs });
+  }
+
+  public clear(): void {
+    this.cache.clear();
+  }
+}
+
+const assistantCache = new SimpleResponseCache(200, 5 * 60 * 1000); // 5 min
+const scamCache = new SimpleResponseCache(200, 15 * 60 * 1000); // 15 min
 
 // Memory store for active sessions (temporary session state)
 const activeSessions: Map<string, TaskEngine> = new Map();
@@ -17,7 +57,9 @@ function getOrCreateSession(sessionId: string, workflowId: WorkflowType = 'train
   return activeSessions.get(sessionId)!;
 }
 
-// 1. Assistant Guidance Endpoint
+// ---------------------------------------------------------------------------
+// 2. Assistant Guidance Endpoint (with deduplication cache)
+// ---------------------------------------------------------------------------
 apiRouter.post('/assistant', async (req: Request, res: Response) => {
   try {
     const data = (req.body && typeof req.body === 'object') ? req.body : {};
@@ -31,6 +73,13 @@ apiRouter.post('/assistant', async (req: Request, res: Response) => {
       completedSteps = []
     } = data;
 
+    // Cache key based on normalized inputs
+    const cacheKey = `asst_${language}_${activeStepName}_${riskLevel}_${userQuery.trim().toLowerCase()}`;
+    const cached = assistantCache.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached, fromCache: true });
+    }
+
     const guidance = await generateCompanionGuidance({
       userQuery,
       language: (language === 'hi' ? 'hi' : 'en') as Language,
@@ -41,6 +90,7 @@ apiRouter.post('/assistant', async (req: Request, res: Response) => {
       completedSteps: Array.isArray(completedSteps) ? completedSteps : []
     });
 
+    assistantCache.set(cacheKey, guidance);
     res.json({ success: true, data: guidance });
   } catch (error: any) {
     console.error('[API /api/assistant] Error:', error?.message || error);
@@ -51,7 +101,9 @@ apiRouter.post('/assistant', async (req: Request, res: Response) => {
   }
 });
 
-// 2. Screen Analysis Endpoint
+// ---------------------------------------------------------------------------
+// 3. Screen Analysis Endpoint
+// ---------------------------------------------------------------------------
 apiRouter.post('/screen-analysis', (req: Request, res: Response) => {
   try {
     const data = (req.body && typeof req.body === 'object') ? req.body : {};
@@ -97,7 +149,9 @@ apiRouter.post('/screen-analysis', (req: Request, res: Response) => {
   }
 });
 
-// 3. Task State Machine Operations Endpoint
+// ---------------------------------------------------------------------------
+// 4. Task State Machine Operations Endpoint
+// ---------------------------------------------------------------------------
 apiRouter.post('/task', (req: Request, res: Response) => {
   try {
     const data = (req.body && typeof req.body === 'object') ? req.body : {};
@@ -154,7 +208,9 @@ apiRouter.post('/task', (req: Request, res: Response) => {
   }
 });
 
-// 4. Scam Analysis Endpoint
+// ---------------------------------------------------------------------------
+// 5. Scam Analysis Endpoint (with deduplication cache)
+// ---------------------------------------------------------------------------
 apiRouter.post('/scam-analysis', async (req: Request, res: Response) => {
   try {
     const data = (req.body && typeof req.body === 'object') ? req.body : {};
@@ -171,12 +227,20 @@ apiRouter.post('/scam-analysis', async (req: Request, res: Response) => {
       });
     }
 
+    // Cache key based on message text hash/prefix
+    const cacheKey = `scam_${language}_${sourceType}_${text.trim().toLowerCase()}`;
+    const cached = scamCache.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: cached, fromCache: true });
+    }
+
     const result = await analyzeScamMessage({
       text,
       sourceType,
       language: (language === 'hi' ? 'hi' : 'en') as Language
     });
 
+    scamCache.set(cacheKey, result);
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[API /api/scam-analysis] Error:', error?.message || error);
@@ -187,7 +251,9 @@ apiRouter.post('/scam-analysis', async (req: Request, res: Response) => {
   }
 });
 
-// 5. Safety & Privacy Firewall Endpoint
+// ---------------------------------------------------------------------------
+// 6. Safety & Privacy Firewall Endpoint
+// ---------------------------------------------------------------------------
 apiRouter.post('/safety/redact', (req: Request, res: Response) => {
   try {
     const data = (req.body && typeof req.body === 'object') ? req.body : {};
@@ -196,5 +262,57 @@ apiRouter.post('/safety/redact', (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: 'Redaction failed' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 7. Backend-Only Testing Endpoints (Scenarios & Automated Regression Suite)
+// ---------------------------------------------------------------------------
+apiRouter.get('/test/scenarios', (_req: Request, res: Response) => {
+  try {
+    const scenarioList = ALL_TEST_SCENARIOS.map((s: TestScenario) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      category: s.category,
+      mode: s.mode,
+      language: s.language,
+      totalEvents: s.events.length,
+      totalAssertions: s.expectedResults.length
+    }));
+    res.json({ success: true, scenarios: scenarioList, total: scenarioList.length });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message || 'Failed to list test scenarios' });
+  }
+});
+
+apiRouter.post('/test/run', async (req: Request, res: Response) => {
+  try {
+    const { scenarioId } = (req.body && typeof req.body === 'object') ? req.body : {};
+    if (!scenarioId) {
+      return res.status(400).json({ success: false, error: 'scenarioId parameter is required' });
+    }
+
+    const scenario = ALL_TEST_SCENARIOS.find((s: TestScenario) => s.id === scenarioId);
+    if (!scenario) {
+      return res.status(404).json({ success: false, error: `Scenario with id '${scenarioId}' not found` });
+    }
+
+    const runner = new ScenarioRunner();
+    const result = await runner.runScenario(scenario);
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message || 'Scenario execution failed' });
+  }
+});
+
+apiRouter.post('/test/run-all', async (_req: Request, res: Response) => {
+  try {
+    const runner = new ScenarioRunner();
+    const suite = await runner.runAll();
+    res.json({ success: true, suite });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error?.message || 'Test suite execution failed' });
   }
 });

@@ -2,12 +2,44 @@ import { TestScenario, ScenarioRunReport, AssertionResult, ExpectedResult } from
 import { TaskEngine } from '../../task-engine/engine.ts';
 import { PrivacyFirewall } from '../../backend/privacyFirewall.ts';
 import { RealOfficialWebsiteResolver, OfficialWebsite } from './providers.ts';
+import { ALL_TEST_SCENARIOS } from './scenarios.ts';
 
 export class ScenarioRunner {
   private websiteResolver: RealOfficialWebsiteResolver;
 
   constructor() {
     this.websiteResolver = new RealOfficialWebsiteResolver();
+  }
+
+  /**
+   * Executes all test scenarios sequentially and aggregates results.
+   */
+  public async runAll(scenarios: TestScenario[] = ALL_TEST_SCENARIOS): Promise<{
+    total: number;
+    passed: number;
+    failed: number;
+    durationMs: number;
+    results: ScenarioRunReport[];
+  }> {
+    const startTime = performance.now();
+    const results: ScenarioRunReport[] = [];
+
+    for (const scenario of scenarios) {
+      const report = await this.runScenario(scenario);
+      results.push(report);
+    }
+
+    const passed = results.filter(r => r.status === 'PASS').length;
+    const failed = results.filter(r => r.status === 'FAIL').length;
+    const durationMs = Math.round(performance.now() - startTime);
+
+    return {
+      total: results.length,
+      passed,
+      failed,
+      durationMs,
+      results
+    };
   }
 
   /**

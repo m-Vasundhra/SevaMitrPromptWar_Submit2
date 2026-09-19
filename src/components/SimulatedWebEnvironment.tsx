@@ -44,7 +44,7 @@ export const SimulatedWebEnvironment: React.FC<SimulatedWebEnvironmentProps> = (
       case 'net_banking':
         return 'https://netbanking.safebank.demo/personal/transfers';
       case 'scam_check':
-        return 'https://safety.saarthi.ai/scam-inspector';
+        return 'https://safety.sevamitr.ai/scam-inspector';
       default:
         return 'https://services.demo.in';
     }
@@ -59,7 +59,7 @@ export const SimulatedWebEnvironment: React.FC<SimulatedWebEnvironmentProps> = (
       case 'net_banking':
         return 'SafeBank Senior NetBanking Portal';
       case 'scam_check':
-        return 'Saarthi Scam & Fraud Shield';
+        return 'SevaMitr Scam & Fraud Shield';
       default:
         return 'Digital Service Portal';
     }

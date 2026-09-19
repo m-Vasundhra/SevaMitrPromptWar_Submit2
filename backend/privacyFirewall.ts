@@ -1,11 +1,22 @@
 import { RedactionResult } from '../shared/types.ts';
 
+// Pre-compiled regex patterns to avoid recompiling on every invocation
+const OTP_REGEX = /\b(?:otp|one[-\s]?time[-\s]?password|code|verification[-\s]?code)\s*[:=is-]*\s*([0-9]{4,8})\b/gi;
+const PIN_REGEX = /\b(?:pin|upi[-\s]?pin|mpin|secret[-\s]?pin)\s*[:=is-]*\s*([0-9]{4,6})\b/gi;
+const CVV_REGEX = /\b(?:cvv|cvc|security[-\s]?code)\s*[:=is-]*\s*([0-9]{3,4})\b/gi;
+const CARD_REGEX = /\b(?:\d{4}[-\s]?){3}\d{4}\b/g;
+const AADHAAR_REGEX = /\b\d{4}\s\d{4}\s\d{4}\b/g;
+const PAN_REGEX = /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/gi;
+const AC_REGEX = /\b(?:a\/c|acc|account|acct)\s*(?:no\.?|num|number)?\s*[:=is-]*\s*([0-9]{9,18})\b/gi;
+const PWD_REGEX = /\b(?:password|passwd|pwd)\s*[:=is-]*\s*(\S+)/gi;
+const SENSITIVE_FIELD_REGEX = /(password|pin|cvv|otp|card|account|aadhaar|pan)/i;
+
 export class PrivacyFirewall {
   /**
-   * Redacts sensitive personal and financial data from user text, screen extracts, and DOM trees.
+   * Fast, secure redaction of sensitive personal and financial data.
    */
   public static redactSensitiveData(input: string): RedactionResult {
-    if (!input || typeof input !== 'string') {
+    if (!input || typeof input !== 'string' || input.trim().length === 0) {
       return { cleanedText: '', cleanText: '', hasRedactions: false, redactedCount: 0, redactedTypes: [] };
     }
 
@@ -13,34 +24,29 @@ export class PrivacyFirewall {
     const typesFound = new Set<string>();
     let count = 0;
 
-    // 1. Redact OTPs (e.g. OTP: 489201, otp is 1234, code 592819)
-    const otpRegex = /\b(?:otp|one[-\s]?time[-\s]?password|code|verification[-\s]?code)\s*[:=is-]*\s*([0-9]{4,8})\b/gi;
-    cleaned = cleaned.replace(otpRegex, (match) => {
+    // 1. Redact OTPs
+    cleaned = cleaned.replace(OTP_REGEX, (match) => {
       typesFound.add('OTP');
       count++;
       return match.replace(/[0-9]{4,8}/, '••••••');
     });
 
-    // 2. Redact PINs & UPI PINs
-    const pinRegex = /\b(?:pin|upi[-\s]?pin|mpin|secret[-\s]?pin)\s*[:=is-]*\s*([0-9]{4,6})\b/gi;
-    cleaned = cleaned.replace(pinRegex, (match) => {
+    // 2. Redact PINs
+    cleaned = cleaned.replace(PIN_REGEX, (match) => {
       typesFound.add('PIN');
       count++;
       return match.replace(/[0-9]{4,6}/, '••••');
     });
 
     // 3. Redact CVV / CVC
-    const cvvRegex = /\b(?:cvv|cvc|security[-\s]?code)\s*[:=is-]*\s*([0-9]{3,4})\b/gi;
-    cleaned = cleaned.replace(cvvRegex, (match) => {
+    cleaned = cleaned.replace(CVV_REGEX, (match) => {
       typesFound.add('CVV');
       count++;
       return match.replace(/[0-9]{3,4}/, '•••');
     });
 
-    // 4. Redact 16-digit Credit/Debit card numbers (with or without dashes/spaces)
-    const cardRegex = /\b(?:\d{4}[-\s]?){3}\d{4}\b/g;
-    cleaned = cleaned.replace(cardRegex, (match) => {
-      // Keep only last 4 digits for senior verification
+    // 4. Redact 16-digit Card numbers
+    cleaned = cleaned.replace(CARD_REGEX, (match) => {
       const digits = match.replace(/[-\s]/g, '');
       if (digits.length === 16) {
         typesFound.add('Card Number');
@@ -50,34 +56,30 @@ export class PrivacyFirewall {
       return match;
     });
 
-    // 5. Redact Indian Aadhaar Number (12 digits in groups of 4: 1234 5678 9012)
-    const aadhaarRegex = /\b\d{4}\s\d{4}\s\d{4}\b/g;
-    cleaned = cleaned.replace(aadhaarRegex, (match) => {
+    // 5. Redact Indian Aadhaar Number
+    cleaned = cleaned.replace(AADHAAR_REGEX, () => {
       typesFound.add('Aadhaar ID');
       count++;
       return 'XXXX-XXXX-XXXX';
     });
 
-    // 6. Redact Indian PAN Card format (5 uppercase letters, 4 digits, 1 letter)
-    const panRegex = /\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b/gi;
-    cleaned = cleaned.replace(panRegex, () => {
+    // 6. Redact Indian PAN Card format
+    cleaned = cleaned.replace(PAN_REGEX, () => {
       typesFound.add('PAN');
       count++;
       return 'XXXXX••••X';
     });
 
-    // 7. Redact Bank Account numbers (9 to 18 digits preceded by account/a/c)
-    const acRegex = /\b(?:a\/c|acc|account|acct)\s*(?:no\.?|num|number)?\s*[:=is-]*\s*([0-9]{9,18})\b/gi;
-    cleaned = cleaned.replace(acRegex, (match, digits) => {
+    // 7. Redact Bank Account numbers
+    cleaned = cleaned.replace(AC_REGEX, (match, digits) => {
       typesFound.add('Bank Account');
       count++;
       const last4 = digits.slice(-4);
       return match.replace(digits, `••••••••${last4}`);
     });
 
-    // 8. Redact Passwords / Passcodes
-    const pwdRegex = /\b(?:password|passwd|pwd)\s*[:=is-]*\s*(\S+)/gi;
-    cleaned = cleaned.replace(pwdRegex, (match, pwd) => {
+    // 8. Redact Passwords
+    cleaned = cleaned.replace(PWD_REGEX, (match, pwd) => {
       typesFound.add('Password');
       count++;
       return match.replace(pwd, '••••••••');
@@ -96,8 +98,12 @@ export class PrivacyFirewall {
    * Sanitizes DOM tree or field metadata before passing to screen analysis.
    */
   public static sanitizeDomElements(elements: Array<{ selector: string; text?: string; placeholder?: string; value?: string; name?: string }>) {
+    if (!Array.isArray(elements) || elements.length === 0) {
+      return [];
+    }
+
     return elements.map(el => {
-      const isSensitiveField = /(password|pin|cvv|otp|card|account|aadhaar|pan)/i.test(
+      const isSensitiveField = SENSITIVE_FIELD_REGEX.test(
         `${el.selector} ${el.name || ''} ${el.placeholder || ''}`
       );
 

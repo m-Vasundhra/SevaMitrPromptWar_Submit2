@@ -204,18 +204,20 @@ export const TrainBookingView: React.FC<TrainBookingViewProps> = ({
                     />
                   </div>
                   {/* Quick Select Buttons */}
-                  <div className="flex items-center gap-1.5 pt-1">
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => handleOriginSubmit('New Delhi')}
-                      className="text-[11px] font-bold px-2 py-0.5 rounded bg-stone-200 hover:bg-amber-100 text-stone-800 transition"
+                      aria-label="Set departure station to New Delhi NDLS"
+                      className="min-h-[40px] text-xs font-bold px-3 py-2 rounded-lg bg-stone-200 hover:bg-amber-100 text-stone-900 border border-stone-300 transition"
                     >
                       + New Delhi (NDLS)
                     </button>
                     <button
                       type="button"
                       onClick={() => handleOriginSubmit('Mumbai Central')}
-                      className="text-[11px] font-bold px-2 py-0.5 rounded bg-stone-200 hover:bg-amber-100 text-stone-800 transition"
+                      aria-label="Set departure station to Mumbai Central"
+                      className="min-h-[40px] text-xs font-bold px-3 py-2 rounded-lg bg-stone-200 hover:bg-amber-100 text-stone-900 border border-stone-300 transition"
                     >
                       + Mumbai
                     </button>
@@ -224,7 +226,7 @@ export const TrainBookingView: React.FC<TrainBookingViewProps> = ({
 
                 {/* To / Destination Input */}
                 <div className="space-y-1.5">
-                  <label htmlFor="input-destination" className="block text-xs font-bold text-stone-700">
+                  <label htmlFor="input-destination" className="block text-xs font-bold text-stone-800">
                     {language === 'hi' ? 'गंतव्य स्टेशन (To):' : 'To (Destination):'}
                   </label>
                   <input
@@ -233,25 +235,27 @@ export const TrainBookingView: React.FC<TrainBookingViewProps> = ({
                     value={destination}
                     onChange={(e) => handleDestinationSubmit(e.target.value)}
                     placeholder="e.g. Jaipur"
-                    className={`w-full bg-white border-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition focus:outline-none ${
+                    className={`w-full min-h-[48px] bg-white border-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition focus:outline-none text-stone-950 ${
                       activeSelector === '#input-destination'
-                        ? 'saarthi-highlight-pulse border-amber-500'
+                        ? 'sevamitr-highlight-pulse border-amber-600'
                         : 'border-stone-300 focus:border-blue-600'
                     }`}
                   />
                   {/* Quick Select Buttons */}
-                  <div className="flex items-center gap-1.5 pt-1">
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => handleDestinationSubmit('Jaipur')}
-                      className="text-[11px] font-bold px-2 py-0.5 rounded bg-stone-200 hover:bg-amber-100 text-stone-800 transition"
+                      aria-label="Set destination station to Jaipur JP"
+                      className="min-h-[40px] text-xs font-bold px-3 py-2 rounded-lg bg-stone-200 hover:bg-amber-100 text-stone-900 border border-stone-300 transition"
                     >
                       + Jaipur (JP)
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDestinationSubmit('Varanasi')}
-                      className="text-[11px] font-bold px-2 py-0.5 rounded bg-stone-200 hover:bg-amber-100 text-stone-800 transition"
+                      aria-label="Set destination station to Varanasi"
+                      className="min-h-[40px] text-xs font-bold px-3 py-2 rounded-lg bg-stone-200 hover:bg-amber-100 text-stone-900 border border-stone-300 transition"
                     >
                       + Varanasi
                     </button>

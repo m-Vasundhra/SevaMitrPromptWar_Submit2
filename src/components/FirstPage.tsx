@@ -21,7 +21,6 @@ interface FirstPageProps {
   fontSize: 'normal' | 'large' | 'extra-large';
   onChangeFontSize: (size: 'normal' | 'large' | 'extra-large') => void;
   onOpenArchitecture: () => void;
-  onOpenTesting?: () => void;
 }
 
 export const FirstPage: React.FC<FirstPageProps> = ({
@@ -30,8 +29,7 @@ export const FirstPage: React.FC<FirstPageProps> = ({
   onStartWorkflow,
   fontSize,
   onChangeFontSize,
-  onOpenArchitecture,
-  onOpenTesting
+  onOpenArchitecture
 }) => {
   const t = getTranslation(language);
 
@@ -124,19 +122,6 @@ export const FirstPage: React.FC<FirstPageProps> = ({
               A++
             </button>
           </div>
-
-          {/* Test Scenarios Engine Modal Trigger */}
-          {onOpenTesting && (
-            <button
-              id="btn-open-testing"
-              onClick={onOpenTesting}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-xs font-bold text-amber-900 transition"
-              title="Built-in Testing & Scenario Engine"
-            >
-              <span>🧪</span>
-              <span>Test Scenarios</span>
-            </button>
-          )}
 
           {/* Architecture Inspector Modal Trigger */}
           <button

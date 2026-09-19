@@ -75,8 +75,8 @@ export const BankingPortalView: React.FC<BankingPortalViewProps> = ({
     onTriggerHighRiskGate({
       title: language === 'hi' ? 'वित्तीय सुरक्षा पुष्टि (High-Risk Financial Action)' : 'Financial Security Authorization Gate',
       warning: language === 'hi'
-        ? `आप ₹${amount} रमेश शर्मा (पुत्र) के खाते में ट्रांसफर करने जा रहे हैं। कृपया स्क्रीन पर नाम और राशि स्वयं जांचें। सारथी कभी भी आपका पासवर्ड, UPI पिन या बैंक OTP नहीं पूछता।`
-        : `You are about to transfer ₹${amount} to Ramesh Sharma (Son). Please verify the recipient name and amount directly on screen. Saarthi AI will never ask for your password, PIN, or OTP.`,
+        ? `आप ₹${amount} रमेश शर्मा (पुत्र) के खाते में ट्रांसफर करने जा रहे हैं। कृपया स्क्रीन पर नाम और राशि स्वयं जांचें। सेवामित्र कभी भी आपका पासवर्ड, UPI पिन या बैंक OTP नहीं पूछता।`
+        : `You are about to transfer ₹${amount} to Ramesh Sharma (Son). Please verify the recipient name and amount directly on screen. SevaMitr AI will never ask for your password, PIN, or OTP.`,
       actionLabel: language === 'hi' ? 'पुष्टि करें व सुरक्षित ट्रांसफर करें (डेमो)' : 'Authorize Safe Demo Transfer',
       onConfirm: () => {
         setIsTransferSuccess(true);
@@ -187,35 +187,53 @@ export const BankingPortalView: React.FC<BankingPortalViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
                     id="bank-beneficiary-1"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Select beneficiary Ramesh Sharma Son"
                     onClick={() => handleSelectBeneficiary('Ramesh Sharma (Son)')}
-                    className={`p-4 rounded-xl border-2 transition cursor-pointer ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectBeneficiary('Ramesh Sharma (Son)');
+                      }
+                    }}
+                    className={`min-h-[56px] p-4 rounded-xl border-2 transition cursor-pointer ${
                       selectedBeneficiary === 'Ramesh Sharma (Son)'
                         ? 'border-emerald-600 bg-white shadow-md'
                         : activeSelector === '#bank-beneficiary-1'
-                        ? 'saarthi-highlight-pulse border-amber-500 bg-amber-50'
-                        : 'border-stone-200 bg-white/80 hover:bg-white'
+                        ? 'sevamitr-highlight-pulse border-amber-600 bg-amber-50'
+                        : 'border-stone-300 bg-white hover:bg-stone-50'
                     }`}
                   >
                     <div className="flex items-center justify-between font-bold text-sm">
-                      <span className="text-stone-900">Ramesh Sharma</span>
-                      <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Son</span>
+                      <span className="text-stone-950">Ramesh Sharma</span>
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">Son</span>
                     </div>
-                    <p className="text-xs text-stone-500 font-mono mt-1">A/c: •••••••• 4819 (HDFC Bank)</p>
+                    <p className="text-xs text-stone-600 font-mono mt-1">A/c: •••••••• 4819 (HDFC Bank)</p>
                   </div>
 
                   <div
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Select beneficiary Sunita Devi Daughter"
                     onClick={() => handleSelectBeneficiary('Sunita Devi (Daughter)')}
-                    className={`p-4 rounded-xl border-2 transition cursor-pointer ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectBeneficiary('Sunita Devi (Daughter)');
+                      }
+                    }}
+                    className={`min-h-[56px] p-4 rounded-xl border-2 transition cursor-pointer ${
                       selectedBeneficiary === 'Sunita Devi (Daughter)'
                         ? 'border-emerald-600 bg-white shadow-md'
-                        : 'border-stone-200 bg-white/80 hover:bg-white'
+                        : 'border-stone-300 bg-white hover:bg-stone-50'
                     }`}
                   >
                     <div className="flex items-center justify-between font-bold text-sm">
-                      <span className="text-stone-900">Sunita Devi</span>
-                      <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">Daughter</span>
+                      <span className="text-stone-950">Sunita Devi</span>
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">Daughter</span>
                     </div>
-                    <p className="text-xs text-stone-500 font-mono mt-1">A/c: •••••••• 9920 (ICICI Bank)</p>
+                    <p className="text-xs text-stone-600 font-mono mt-1">A/c: •••••••• 9920 (ICICI Bank)</p>
                   </div>
                 </div>
 

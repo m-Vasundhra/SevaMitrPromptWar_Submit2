@@ -89,7 +89,7 @@ export const ScamInspectorView: React.FC<ScamInspectorViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-lg tracking-wide">
-                {language === 'hi' ? 'सारथी सुरक्षा व फ्रॉड चेकर' : 'Saarthi Scam & Fraud Shield'}
+                {language === 'hi' ? 'सेवामित्र सुरक्षा व फ्रॉड चेकर' : 'SevaMitr Scam & Fraud Shield'}
               </span>
               <span className="bg-rose-500 text-white font-extrabold text-[10px] px-2 py-0.5 rounded uppercase">AI ANALYSIS</span>
             </div>

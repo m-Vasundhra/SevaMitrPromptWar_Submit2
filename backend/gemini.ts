@@ -31,7 +31,7 @@ function getGeminiClient(): GoogleGenAI | null {
 }
 
 /**
- * Resilient content generation helper that cascades through fallback models.
+ * Resilient content generation helper that cascades through fallback models with strict per-attempt timeouts.
  */
 export async function generateWithFallback(
   contents: any,
@@ -46,7 +46,12 @@ export async function generateWithFallback(
 
   for (const model of MODEL_LADDER) {
     try {
-      const response = await ai.models.generateContent({
+      // Timeout promise to ensure fast failure and non-blocking Express threads
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`Model ${model} request timed out after 7000ms`)), 7000);
+      });
+
+      const generationPromise = ai.models.generateContent({
         model,
         contents,
         config: {
@@ -60,7 +65,9 @@ export async function generateWithFallback(
         }
       });
 
-      if (response.text) {
+      const response = await Promise.race([generationPromise, timeoutPromise]);
+
+      if (response && response.text) {
         return response.text;
       }
     } catch (err: any) {
@@ -180,7 +187,7 @@ export async function analyzeScamMessage(params: {
 }): Promise<ScamAnalysisResult> {
   const { cleanedText, redactedCount, redactedTypes } = PrivacyFirewall.redactSensitiveData(params.text);
 
-  const systemInstruction = `You are Saarthi Cyber Safety Analyzer for senior citizens.
+  const systemInstruction = `You are SevaMitr Cyber Safety Analyzer for senior citizens.
 Analyze the provided message/SMS/WhatsApp alert for fraud and scam characteristics (urgency, threats of electricity cutoff, lottery claims, requests for OTP/PIN, unknown APK downloads, suspicious links).
 Important Guidelines:
 1. Do not present the judgment with absolute aggressive panic; explain calmly with phrases like "Possible scam indicators detected" or "Be careful".

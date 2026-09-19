@@ -18,7 +18,6 @@ import { TermsGlossaryModal } from './components/TermsGlossaryModal.tsx';
 import { RiskConfirmationModal } from './components/RiskConfirmationModal.tsx';
 import { PrivacyShieldModal } from './components/PrivacyShieldModal.tsx';
 import { ArchitectureModal } from './components/ArchitectureModal.tsx';
-import { TestScenarioDashboardModal } from './components/testing/TestScenarioDashboardModal.tsx';
 import { 
   ArrowLeft, 
   Languages, 
@@ -26,8 +25,7 @@ import {
   ShieldCheck, 
   BookOpen, 
   Layers,
-  HeartHandshake,
-  FlaskConical
+  HeartHandshake
 } from 'lucide-react';
 
 export default function App() {
@@ -55,9 +53,6 @@ export default function App() {
   const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
   const [isPrivacyShieldOpen, setIsPrivacyShieldOpen] = useState(false);
   const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
-  const [isTestingOpen, setIsTestingOpen] = useState(() => {
-    return window.location.pathname.includes('test') || window.location.hash.includes('test');
-  });
   const [riskModalData, setRiskModalData] = useState<{
     title: string;
     warning: string;
@@ -268,7 +263,6 @@ export default function App() {
           fontSize={fontSize}
           onChangeFontSize={setFontSize}
           onOpenArchitecture={() => setIsArchitectureOpen(true)}
-          onOpenTesting={() => setIsTestingOpen(true)}
         />
       ) : (
         /* 2. Active Digital Companion Experience Layout */
@@ -349,17 +343,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Testing Engine Trigger */}
-                <button
-                  id="btn-nav-testing"
-                  onClick={() => setIsTestingOpen(true)}
-                  className="px-2.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
-                  title="Scenario Testing Engine"
-                >
-                  <FlaskConical className="w-4 h-4 text-amber-800" />
-                  <span className="hidden md:inline">Tests</span>
-                </button>
-
                 {/* Glossary & Privacy Trigger */}
                 <button
                   id="btn-nav-glossary"
@@ -437,11 +420,6 @@ export default function App() {
         isOpen={isArchitectureOpen}
         onClose={() => setIsArchitectureOpen(false)}
         language={language}
-      />
-
-      <TestScenarioDashboardModal
-        isOpen={isTestingOpen}
-        onClose={() => setIsTestingOpen(false)}
       />
 
       {riskModalData && (
